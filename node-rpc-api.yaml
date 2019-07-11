@@ -1,0 +1,313 @@
+openapi: 3.0.1
+servers:
+- url: 'https://mainnet.mcash.network'
+- url: 'https://testnet.mcash.network'
+- url: 'https://zeronet.mcash.network'
+
+info:
+  description: |
+    # Introduction
+    Welcome to the reference for the Node Rpc API!.
+
+    You can access API via one of the following endpoints
+
+    | Network   | Base URL for API Endpoints    |
+    |-----------|-------------------------------|
+    |Mainnet    | https://mainnet.mcash.network |
+    |Testnet    | https://testnet.mcash.network |
+    |Zeronet    | https://zeronet.mcash.network |
+  version: 1.0.0
+  title: McashChain RPC API
+  contact:
+    url: 'https://developer.mcash.network'
+    email: developer@mcash.network
+tags:
+- name: Addresses & Accounts
+- name: Query Network
+- name: Smart Contracts
+- name: Voting & Supper nodes
+- name: Token
+- name: DEX Exchange
+
+paths:
+  /wallet/getaccount:
+    post:
+      tags:
+      - Addresses & Accounts
+      operationId: wallet-getaccount
+      description: >-
+        Queries information about an account. Returns the account object.
+      summary: Get Account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/addressObject'
+            examples:
+              first:
+                value:
+                  address: 321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702
+      responses:
+        '200':
+          description: >-
+            The results returned from this API are unconfirmed and subject to change if the network forks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/account'
+              examples:
+                Success:
+                  value:
+                    address: 321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702
+                    balance: 31000793
+                    vote:
+                      vote_address: 32e093bdddd1d36afbb3d6c65d4569dc2dc2987c55
+                      vote_count: 20000
+                    create_time: 1561720485000
+                    latest_operation_time: 1562030079000
+                    allowance: 9578823211345
+                    latest_withdraw_time: 1561996848000
+                    is_committee: true
+                    account_resource:
+                      latest_bandwidth_consume_time: 1561521600000
+                      latest_free_bandwidth_consume_time: 1562030079000
+                      latest_energy_consume_time: 1561521600000
+                    stake:
+                      stake_amount: 209000000000000
+                      expiration_time: 1562257185000
+                    witness_stake:
+                      stake_amount: 500000000000000
+                      expiration_time: -1
+                'Not found':
+                  value: {}
+      x-code-samples:
+      - lang: Curl
+        source: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{ "address" : "321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702"}' \
+          "https://mainnet.mcash.network/wallet/getaccount"
+      - lang: mcashweb
+        source: |
+          mcashweb.mcash.getAccount('321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702').then(data => {
+            console.log(data);
+          })
+components:
+  parameters:
+
+  schemas:
+    address:
+      description: Account address, converted to a hex string.
+      type: string
+      format: hex
+    vote_address:
+      description: Vote address, converted to a hex string.
+      type: string
+      format: hex
+    vote:
+      type: object
+      properties:
+        vote_address:
+          type: string
+          format: hex
+        vote_count:
+          type: integer
+          format: int64
+    permission:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - "Owner"
+          - "Witness"
+          - "Active"
+        id:
+          type: integer
+          format: int32
+          description: Owner id=0, Witness id=1, Active id start by 2
+        permission_name:
+          type: string
+        threshold:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int32
+        operations:
+          type: string
+          format: hex
+        keys:
+          type: array
+          items:
+            type: object
+            properties:
+              address:
+                $ref: '#/components/schemas/address'
+              weight:
+                type: integer
+                format: int64
+    accountResource:
+      type: object
+      properties:
+        bandwidth_usage:
+          type: integer
+          format: int64
+        latest_bandwidth_consume_time:
+          type: integer
+          format: int64
+        free_bandwidth_usage:
+          type: integer
+          format: int64
+        latest_free_bandwidth_consume_time:
+          type: integer
+          format: int64
+        energy_usage:
+          type: integer
+          format: int64
+        latest_energy_consume_time:
+          type: integer
+          format: int64
+        asset_free_bandwidth_usage:
+          type: object
+          description: Return Map values (Map<int64,int64>) with key is assetId and value is bandwidth usage
+        latest_asset_operation_time:
+          type: object
+          description: Return Map values (Map<int64,int64>) with key is assetId and value is operation time
+
+    stake:
+      type: object
+      properties:
+        stake_amount:
+          type: interger
+          format: int64
+        expiration_time:
+          type: interger
+          format: int64
+    frozens:
+      type: array
+      items:
+        type: object
+        properties:
+          frozen_balance:
+            type: interger
+            format: int64
+          expire_time:
+            type: interger
+            format: int64
+    delegatedFrozens:
+      type: array
+      items:
+        type: object
+        properties:
+          acquired_delegated_balance:
+            type: interger
+            format: int64
+          delegated_balance:
+            type: interger
+            format: int64
+    addressObject:
+      type: object
+      properties:
+        address:
+          description: >-
+            Account address, converted to a hex string.
+          type: string
+          format: hex
+      required:
+      - address
+    account:
+      type: object
+      properties:
+        account_name:
+          type: string
+        account_type:
+          type: string
+          enum:
+          - Normal
+          - AssetIssue
+          - Contract
+        address:
+          $ref: '#/components/schemas/address'
+        balance:
+          description: Balance of account expressed in Matoshi
+          type: interger
+          format: int64
+        vote:
+          $ref: '#/components/schemas/vote'
+        assets:
+          type: object
+          description: Return Map values (Map<int64,int64>) with key is assetId and value is balance of the asset which user own
+        frozen_for_bandwidth:
+          $ref: '#/components/schemas/frozens'
+        frozen_for_energy:
+          $ref: '#/components/schemas/frozens'
+        frozen_assets:
+          $ref: '#/components/schemas/frozens'
+        delegated_frozen_for_bandwidth:
+          $ref: '#/components/schemas/delegatedFrozens'
+        delegated_frozen_for_energy:
+          $ref: '#/components/schemas/delegatedFrozens'
+        create_time:
+          description: Created time
+          type: interger
+          format: int64
+        latest_operation_time:
+          type: interger
+          format: int64
+        allowance:
+          type: interger
+          format: int64
+        latest_withdraw_time:
+          type: interger
+          format: int64
+        is_witness:
+          type: boolean
+        is_committee:
+          type: boolean
+        asset_issued_id:
+          type: integer
+          format: int64
+        account_id:
+          type: string
+          format: hex
+        account_resource:
+          $ref: '#/components/schemas/accountResource'
+        codeHash:
+          type: string
+          format: hex
+        stake:
+          $ref: '#/components/schemas/stake'
+        witness_stake:
+          $ref: '#/components/schemas/stake'
+        owner_permission:
+          $ref: '#/components/schemas/permission'
+        witness_permission:
+          $ref: '#/components/schemas/permission'
+        active_permission:
+          $ref: '#/components/schemas/permission'
+      required:
+      - address
+    dataSetList:
+      type: object
+      properties:
+        total:
+          type: integer
+        apis:
+          type: array
+          items:
+            type: object
+            properties:
+              apiKey:
+                type: string
+                description: To be used as a dataset parameter value
+              apiVersionNumber:
+                type: string
+                description: To be used as a version parameter value
+              apiUrl:
+                type: string
+                format: uriref
+                description: "The URL describing the dataset's fields"
+              apiDocumentationUrl:
+                type: string
+                format: uriref
+                description: A URL to the API console for each API

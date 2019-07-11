@@ -1,2 +1,8 @@
 # mcashchain-wiki
-The Mcashchain Wiki https://www.mcash.network
+The docs for Mcashchain developer [https://www.mcash.network](https://www.mcash.network)
+# Developer
+
+```
+yarn install
+yarn dev
+```

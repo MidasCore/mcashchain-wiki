@@ -1,0 +1,9 @@
+pipeline:
+  build-docker:
+    image: docker:17.12.1-ce
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - docker build . -t mcash/mcashchain-wiki
+    when:
+      event: [push]
