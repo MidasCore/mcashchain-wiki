@@ -1,9 +1,39 @@
-pipeline:
-  build-docker:
-    image: docker:17.12.1-ce
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    commands:
-      - docker build . -t mcash/mcashchain-wiki
-    when:
-      event: [push]
+---
+kind: pipeline
+name: default
+steps:
+- name: publish_server
+  image: plugins/docker
+  settings:
+    tags: latest
+    dockerfile: Dockerfile
+    password:
+      from_secret: DOCKER_PASSWORD
+    repo: mcash/mcashchain-wiki
+    purge: false
+    username:
+      from_secret: DOCKER_USERNAME
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - tag
+- name: deploy
+  image: deploy
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - tag
+  environment:
+    IMAGE_TAG: latest
+    KUBE_CONFIG_PATH:
+      from_secret: KUBE_CONFIG_PATH
+    GKE_NAMESPACE:
+      from_secret: GKE_NAMESPACE
+    DEPLOY_CHART_NAME: mcashchain-wiki
+    CHART_PATH: ./helm
+  commands:
+  - helm --kubeconfig=$KUBE_CONFIG_PATH upgrade -i $DEPLOY_CHART_NAME $CHART_PATH --namespace=$GKE_NAMESPACE --set image.tag=$IMAGE_TAG
