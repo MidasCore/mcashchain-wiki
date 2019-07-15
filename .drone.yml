@@ -5,7 +5,9 @@ steps:
 - name: publish_server
   image: plugins/docker
   settings:
-    tags: latest
+    tags:
+    - latest
+    - "${DRONE_BUILD_NUMBER}"
     dockerfile: Dockerfile
     password:
       from_secret: DOCKER_PASSWORD
@@ -28,7 +30,7 @@ steps:
     - push
     - tag
   environment:
-    IMAGE_TAG: latest
+    IMAGE_TAG: "${DRONE_BUILD_NUMBER}"
     KUBE_CONFIG_PATH:
       from_secret: KUBE_CONFIG_PATH
     GKE_NAMESPACE:

@@ -7,10 +7,24 @@
 
 This is source code for [https://developer.mcash.network](https://developer.mcash.network)
 
-# Developer Quick Start
+# Overview
+* This site using [vue-press](https://vuepress.vuejs.org/guide/) to generate static website
+## Features
 
-```
+* Document for MCashScan
+* API Reference for Node RPC
+
+# Requirements
+
+* node.js
+* yarn
+
+# Running
+
+```bash
 yarn install
-yarn dev
-
+yarn start
 ```
+## Config File
+* [docs/config.js](docs/config.js)
+* [docs/nav/en.js](docs/nav/en.js) 
