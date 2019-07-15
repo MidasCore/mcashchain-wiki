@@ -10,11 +10,4 @@ module.exports = [
       link: '/api/node-rpc'
     }]
   },
-  {
-    text: 'SDK',
-    items: [{
-      text: 'mcashweb (Javascript)',
-      link: '/sdk'
-    }]
-  },
 ]

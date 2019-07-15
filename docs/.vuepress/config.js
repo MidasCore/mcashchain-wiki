@@ -103,9 +103,18 @@ function getGuideSidebar() {
     {
       title: "Smart Contract",
       collapsable: false,
-      children: []
+      children: [
+          'smart-contract/deploy-contract'
+      ]
     },
-    'sdk'
+    {
+      title: "SDK",
+      collapsable: true,
+      children: [
+          'sdk/mcashweb'
+      ]
+    }
   ]
+
 }
 

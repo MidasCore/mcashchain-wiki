@@ -23,8 +23,8 @@ This is source code for [https://developer.mcash.network](https://developer.mcas
 
 ```bash
 yarn install
-yarn start
+yarn dev
 ```
 ## Config File
-* [docs/config.js](docs/config.js)
-* [docs/nav/en.js](docs/nav/en.js) 
+* [docs/.vuepress/config.js](docs/.vuepress/config.js)
+* [docs/.vuepress/nav/en.js](docs/.vuepress/nav/en.js) 
