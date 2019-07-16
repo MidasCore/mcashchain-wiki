@@ -104,7 +104,8 @@ function getGuideSidebar() {
       title: "Smart Contract",
       collapsable: false,
       children: [
-          'smart-contract/deploy-contract'
+          'smart-contract/deploy-contract',
+          'smart-contract/energy-cost'
       ]
     },
     {

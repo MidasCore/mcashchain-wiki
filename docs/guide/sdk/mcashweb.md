@@ -450,8 +450,8 @@ mcashWeb.transactionBuilder.vote("M9Fbdp9xRb66fct5zkgjN5FjGJ1X8WV9JT", "MF7uTJWM
 |parameters|Parameter passed to the constructor of the contract|string|
 |name|Contract name|string|
 |feeLimit|The upper limit of the smart contract deploy cost, in Matoshi|int64|
-|userFeePercentage|The percentage of resources specified for users who use this contract. This field accepts integers between [0, 100]. If it is 0, it means the user does not consume resources until the developer resources are exhausted. However, it is strongly recommended to set the value between 1 and 99 (inclusive). This is prevent the contract developer from potential malicious infinite loop time out attacks|integer|
-|originEnergyLimit|The max energy which will be consumed by the owner in the process of execution or creation of the contract, is an integer which should be greater than 0|string|
+|userFeePercentage|The percentage of resources specified for users who use this contract. This field accepts integers between [0, 100]. If it is 0, it means the user does not consume resources until the developer resources are exhausted. However, it is strongly recommended to set the value between 1 and 99 (inclusive). This is prevent the contract developer from potential malicious infinite loop time out attacks|int32|
+|originEnergyLimit|The max energy which will be consumed by the owner in the process of execution or creation of the contract, is an integer which should be greater than 0|int64|
 |callValue|Amount of Matoshi transferred with this deployment|int64|
 ##### Example
 ```javascript
