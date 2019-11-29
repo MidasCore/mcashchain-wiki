@@ -6,20 +6,108 @@ McashStudio is an IDE for developing, deploying, and debugging smart contracts b
 
 [TODO]
 
+## McashBox
+[McashBox](https://www.npmjs.com/package/mcashbox) is development environment, testing framework and asset pipeline for blockchains using the Mcash Virtual Machine (MVM).
+
+### Installation
+```npm install -g mcashbox```
+
+### Requirements
+* NodeJS v8.9.4 or later
+* Windows, Linux or Mac OS X
+
+### Creating a Project
+1. Create a new directory for your McashBox project:
+    ```
+    mkdir test
+    cd test
+    ```
+
+2. Create bare project:
+    ```
+    mcashbox init
+    ```
+
+Once this operation is completed, you'll now have a project structure with the following items:
+
+* contracts/: Directory for Solidity contracts
+* migrations/: Directory for scriptable deployment files
+* test/: Directory for test files for testing your application and contracts
+* config.js: Configuration file
+
+Example configuration file:
+```javascript
+const port = process.env.HOST_PORT || 13399;
+
+module.exports = {
+    networks: {
+        mainnet: {
+            privateKey: process.env.PRIVATE_KEY_MAINNET,
+            userFeePercentage: 100,
+            feeLimit: 1e9,
+            fullHost: "https://mainnet.mcash.network",
+            network_id: "1"
+        },
+        testnet: {
+            privateKey: process.env.PRIVATE_KEY_TESTNET,
+            userFeePercentage: 50,
+            feeLimit: 1e9,
+            fullHost: "https://testnet.mcash.network",
+            network_id: "3",
+        },
+        development: {
+            // For local
+            privateKey: '261b559a288dbeffdea44225b30dab6246bb2eaeb23c1ff9283cb74a716f0c5c',
+            userFeePercentage: 50,
+            feeLimit: 1e9,
+            fullHost: 'http://127.0.0.1:' + port,
+            network_id: "19",
+        }
+    }
+};
+```
+
+### Compiling contracts
+All of your contracts are located in your project's `contracts/` directory. As contracts are written in Solidity, all files containing contracts will have a file extension of `.sol`. Associated Solidity libraries will also have a `.sol` extension.
+
+To compile project, change to the root of the directory where the project is located and then type the following into a terminal:
+```
+mcashbox compile
+```
+
+Upon first run, all contracts will be compiled. Upon subsequent runs, Mcashbox will compile only the contracts that have been changed since the last compile. If you'd like to override this behavior, run the above command with the `--compile-all` option.
+
+Artifacts of your compilation will be placed in the `build/contracts/` directory, relative to your project root. 
+
+### Running Migrations (Deploy)
+To run your migrations, run the following:
+```
+mcashbox migrate
+```
+
+This will run all migrations located within your project's `migrations` directory. 
+
+Options: 
+
+* --reset: run all your migrations from the beginning
+* --network: select network to deploy
+
+
+A simple migration file looks like this:
+
+```javascript
+var MyContract = artifacts.require("MyContract");
+
+module.exports = function(deployer) {
+  deployer.deploy(MyContract);
+};
+```
+
+Note that the filename is prefixed with a number and is suffixed by a description. The numbered prefix is required in order to record whether the migration ran successfully. The suffix is purely for human readability and comprehension.
+
 ## McashWeb
 
-### Compile contract using remix
-[Remix](https://remix.ethereum.org) is a very powerful compiler for solidity, you can use remix to compile, test and even deploy a smart contract to Ethereum blockchain. But here we’ll use remix only as a compiler.
-
-First, paste your smart contract code in Remix and compile the smart contract. Choose compiler version and click on start to compile to compile your smart contract.
-
-<img src="/images/smart-contract/compile.png?raw=true">
-
-We need 2 things from the compiled smart contract, ABI, and Bytecode. Click buttons "ABI" or "Bytecode" to copy it to clipboard.
-
-### Deploy
-
-Create deployment transaction using [`McashWeb.transactionBuilder.createSmartContract`](/guide/sdk/mcashweb.html#createsmartcontract). Then sign & broadcast it to blockchain.
+Compile contract using `mcashbox` or `solc-mcash` to get contract's bytecode and abi. Create deployment transaction using [`McashWeb.transactionBuilder.createSmartContract`](/guide/sdk/mcashweb.html#createsmartcontract). Then sign & broadcast it to blockchain.
 
 Example 
 ```javascript
