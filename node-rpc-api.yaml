@@ -2,7 +2,6 @@ openapi: 3.0.1
 servers:
 - url: 'https://mainnet.mcash.network'
 - url: 'https://testnet.mcash.network'
-- url: 'https://zeronet.mcash.network'
 
 info:
   description: |
@@ -15,7 +14,6 @@ info:
     |-----------|-------------------------------|
     |Mainnet    | https://mainnet.mcash.network |
     |Testnet    | https://testnet.mcash.network |
-    |Zeronet    | https://zeronet.mcash.network |
   version: 1.0.0
   title: McashChain RPC API
   contact:
@@ -27,9 +25,150 @@ tags:
 - name: Smart Contracts
 - name: Voting & Supper nodes
 - name: Token
-- name: DEX Exchange
 
 paths:
+  # Addresses & Accounts
+  /wallet/generateaddress:
+    post:
+      tags:
+      - Addresses & Accounts
+      operationId: wallet-generateaddress
+      description: >-
+        Generates a random private key and address pair. Returns a private key, the corresponding address in hex and base58.
+      summary: Generate Address
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  address:
+                    type: string
+                    format: base58
+                  private_key:
+                    type: string
+                    format: hex
+                  hex_address:
+                    type: string
+                    format: hex
+              examples:
+                Success:
+                  value:
+                    address: MGQwSVjwEvNdWnL9gAYNCLcTHUyvNauUVT
+                    private_key: d0fcb53be111a10dcbf735f528d36b9ef5baff4ed1f50b8fbc6ec49fffa5873c
+                    hex_address: 325d62ce9307aff0ec378fd96209b0fd3027f46c60
+      x-code-samples:
+      - lang: Curl
+        source: |
+          curl -X POST -H "Content-Type: application/json" \
+          "https://mainnet.mcash.network/wallet/generateaddress"
+
+  /wallet/createaccount:
+    post:
+      tags:
+      - Addresses & Accounts
+      operationId: wallet-createaccount
+      description: >-
+        Activate account.
+      summary: Activate Address
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                owner_address:
+                  type: string
+                  format: hex
+                  description: Activated account
+                account_address:
+                  type: string
+                  format: hex
+                  description: Address of the new account, this address needs to be activated
+            examples:
+              first:
+                value:
+                  owner_address: 321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702
+                  account_address: 325d62ce9307aff0ec378fd96209b0fd3027f46c60
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transactionResponse'
+              examples:
+                first:
+                  value: null
+      x-code-samples:
+      - lang: Curl
+        source: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{ "owner_address" : "321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702", "account_address": "325d62ce9307aff0ec378fd96209b0fd3027f46c60" }' \
+          "https://mainnet.mcash.network/wallet/createaccount"
+      - lang: mcashweb
+        source: |
+          mcashweb.transactionBuilder.createAccount(
+            '325d62ce9307aff0ec378fd96209b0fd3027f46c60',
+            '321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702').then(data => {
+            console.log(data);
+          })
+
+  /wallet/broadcasttransaction:
+    post:
+      tags:
+      - Addresses & Accounts
+      operationId: wallet-broadcasttransaction
+      description: >-
+        Broadcast signed transaction.
+      summary: Broadcast Transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: array
+                  items:
+                    type: string
+                    format: hex
+                tx_id:
+                  type: string
+                  format: hex
+                raw_data:
+                  type: object
+                raw_data_hex:
+                  type: string
+                  format: hex
+            examples:
+              first:
+                value: null
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+              examples:
+                first:
+                  value:
+                    result: true
+      x-code-samples:
+      - lang: Curl
+        source: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{ }' \
+          "https://mainnet.mcash.network/wallet/broadcasttransaction"
+      - lang: mcashweb
+        source: |
+          mcashweb.mcash.sendRawTransaction().then(data => {
+            console.log(data);
+          })
+
   /wallet/getaccount:
     post:
       tags:
@@ -42,7 +181,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/addressObject'
+              $ref: '#/components/schemas/addressRequestBody'
             examples:
               first:
                 value:
@@ -91,6 +230,481 @@ paths:
           mcashweb.mcash.getAccount('321e5a1fc4aa2d5f801ae1f28cfa40e39248bb4702').then(data => {
             console.log(data);
           })
+
+  /wallet/getaccountresource:
+    post:
+      tags:
+      - Addresses & Accounts
+      operationId: wallet-getaccountresource
+      description: >-
+        Queries the resource information of an account.
+      summary: Account Resources
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/addressRequestBody'
+            examples:
+              first:
+                value:
+                  address: 325d62ce9307aff0ec378fd96209b0fd3027f46c60
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/accountResourceResponse'
+              examples:
+                first:
+                  value:
+                    free_bandwidth_limit: 10000
+                    bandwidth_limit: 5709
+                    asset_bandwidth_used:
+                      - key: 1000001
+                        value: 0
+                    asset_bandwidth_limit:
+                      - key: 1000001
+                        value: 0
+                    total_bandwidth_limit: 43200000000
+                    total_bandwidth_weight: 151321793
+                    energy_limit: 11037405
+                    total_energy_limit: 50000000000
+                    total_energy_weight: 181202
+      x-code-samples:
+      - lang: curl
+        source: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{ "address": "325d62ce9307aff0ec378fd96209b0fd3027f46c60" }' \
+          "https://mainnet.mcash.network/wallet/getaccountresource"
+      - lang: mcashweb
+        source: |
+          mcashweb.mcash.getAccountResources('325d62ce9307aff0ec378fd96209b0fd3027f46c60').then(data => {
+            console.log(data);
+          })
+
+  /wallet/createtransaction:
+    post:
+      tags:
+      - Addresses & Accounts
+      operationId: wallet-createtransaction
+      description: >-
+        Create a transfer transaction.
+      summary: Transfer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                owner_address:
+                  type: string
+                  format: hex
+                  description: Sender address
+                to_address:
+                  type: string
+                  format: hex
+                  description: Receive address
+                amount:
+                  type: integer
+                  description: Amount, in matoshi
+            examples:
+              first:
+                value:
+                  owner_address: 325d62ce9307aff0ec378fd96209b0fd3027f46c60
+                  to_address: 32a5801ea2895198f9c35035a66e01bc1cca4dd84c
+                  amount: 100000000
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transactionResponse'
+              examples:
+                first:
+                  value: null
+      x-code-samples:
+      - lang: curl
+        source: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{ "owner_address": "325d62ce9307aff0ec378fd96209b0fd3027f46c60", "to_address": "32a5801ea2895198f9c35035a66e01bc1cca4dd84c", "amount": 100000000 }' \
+          "https://mainnet.mcash.network/wallet/createtransaction"
+      - lang: mcashweb
+        source: |
+          mcashweb.mcash.sendMcash('32a5801ea2895198f9c35035a66e01bc1cca4dd84c', 100000000, '325d62ce9307aff0ec378fd96209b0fd3027f46c60').then(data => {
+            console.log(data);
+          })
+
+  # Query Network
+  /wallet/getblockbynum:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-getblockbynum
+      description: >-
+        Queries information about a block by 'Block Height'. Returns the block object.
+      summary: Get Block By Height
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/numRequestBody'
+            examples:
+              first:
+                value:
+                  num: 1000000
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/block'
+              examples:
+                Success:
+                  value:
+                    block_header:
+                      raw_data:
+                        number: 1000000
+                        witness_address: 3211da43f143deb847555977cb32258c4c9251acfe
+                        version: 2
+                        parent_hash: 00000000000f423fdd3d41f74cb113aa7ddf4e2ddbdb9b0450b70da3646296f4
+                        timestamp: 1564524456000
+                        tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                      witness_signature: f7223564b31a0205b83b6c4da3b5eb39ef676da5e05806f45b51065c98d7f67f78650e9664ea51fecd3c62cc1c4f7395ccc07f81eed886137871321ab925175f00
+                    block_id: 00000000000f4240914f382a811b0391e803ef96ccb9f9a37934442097a2b9ec
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{ "num" : 1000000}' \
+            "https://mainnet.mcash.network/wallet/getblockbynum"
+        - lang: mcashweb
+          source: |
+            mcashweb.mcash.getBlockByNumber(1000000).then(data => {
+              console.log(data);
+            })
+
+  /wallet/getblockbyid:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-getblockbyid
+      description: >-
+        Queries information about a block by 'Block Hash'. Returns the block object.
+      summary: Get Block By Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/idRequestBody'
+            examples:
+              first:
+                value:
+                  value: 00000000000f4240914f382a811b0391e803ef96ccb9f9a37934442097a2b9ec
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/block'
+              examples:
+                Success:
+                  value:
+                    block_header:
+                      raw_data:
+                        number: 1000000
+                        witness_address: 3211da43f143deb847555977cb32258c4c9251acfe
+                        version: 2
+                        parent_hash: 00000000000f423fdd3d41f74cb113aa7ddf4e2ddbdb9b0450b70da3646296f4
+                        timestamp: 1564524456000
+                        tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                      witness_signature: f7223564b31a0205b83b6c4da3b5eb39ef676da5e05806f45b51065c98d7f67f78650e9664ea51fecd3c62cc1c4f7395ccc07f81eed886137871321ab925175f00
+                    block_id: 00000000000f4240914f382a811b0391e803ef96ccb9f9a37934442097a2b9ec
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{ "value" : "00000000000f4240914f382a811b0391e803ef96ccb9f9a37934442097a2b9ec"}' \
+            "https://mainnet.mcash.network/wallet/getblockbynum"
+        - lang: mcashweb
+          source: |
+            mcashweb.mcash.getBlockByHash("00000000000f4240914f382a811b0391e803ef96ccb9f9a37934442097a2b9ec").then(data => {
+              console.log(data);
+            })
+
+  /wallet/getblockbylatestnum:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-getblockbylatestnum
+      description: >-
+        Queries information about latest blocks. Returns the array of block objects.
+      summary: Get Latest Blocks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/numRequestBody'
+            examples:
+              first:
+                value:
+                  value: 2
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/block'
+              examples:
+                Success:
+                  value:
+                    block:
+                     - block_header:
+                        raw_data:
+                          timestamp: 1588567500000
+                          tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                          parent_hash: 00000000008942937f5bc6754784e6592f8122f31940ec99f83a09302e7305ec
+                          number: 8995476
+                          witness_address: 32da42ec4b01995df24748247c488674dd287e9191
+                          version: 3
+                        witness_signature: 7e95d98c8e7c84a811a835794ab0df8138d2405efb998427caf42d69f24ee97f23f3ba00cce3363e1da4de0fb83463822bf6532214e2471f61db2efd8503efa600
+                     - block_header:
+                        raw_data:
+                          timestamp: 1588567503000
+                          tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                          parent_hash: 000000000089429408a25a8832cdb2ad410c86c41b9f072faec868190b26e8f2
+                          number: 8995477
+                          witness_address: 323fd23b408d2334a7d83889ada6e2c104c8717a9f
+                          version: 3
+                        witness_signature: fea341d2f8e918215be47c7ae22a7135155804c06b08f87000fb9365d49718d0532b2bbe6a57230c68be30913e2413e86d20a7a415b07bf8bc2417b988b7fe9301
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{ "num": 2}' \
+            "https://mainnet.mcash.network/wallet/getblockbylatestnum"
+
+  /wallet/getblockbylimitnext:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-getblockbylimitnext
+      description: >-
+        Queries information about blocks, included in the specified range. Returns the array of block objects.
+      summary: Get Blocks In Range
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_num:
+                  type: integer
+                  format: int32
+                end_num:
+                  type: integer
+                  format: int32
+            examples:
+              first:
+                value:
+                  start_num: 8995476
+                  end_num: 8995478
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/block'
+              examples:
+                Success:
+                  value:
+                    block:
+                     - block_header:
+                        raw_data:
+                          timestamp: 1588567500000
+                          tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                          parent_hash: 00000000008942937f5bc6754784e6592f8122f31940ec99f83a09302e7305ec
+                          number: 8995476
+                          witness_address: 32da42ec4b01995df24748247c488674dd287e9191
+                          version: 3
+                        witness_signature: 7e95d98c8e7c84a811a835794ab0df8138d2405efb998427caf42d69f24ee97f23f3ba00cce3363e1da4de0fb83463822bf6532214e2471f61db2efd8503efa600
+                     - block_header:
+                        raw_data:
+                          timestamp: 1588567503000
+                          tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                          parent_hash: 000000000089429408a25a8832cdb2ad410c86c41b9f072faec868190b26e8f2
+                          number: 8995477
+                          witness_address: 323fd23b408d2334a7d83889ada6e2c104c8717a9f
+                          version: 3
+                        witness_signature: fea341d2f8e918215be47c7ae22a7135155804c06b08f87000fb9365d49718d0532b2bbe6a57230c68be30913e2413e86d20a7a415b07bf8bc2417b988b7fe9301
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{ "start_num": 8995476, "end_num": 8995478 }' \
+            "https://mainnet.mcash.network/wallet/getblockbylimitnext"
+
+  /wallet/getnowblock:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-getnowblock
+      description: >-
+        Queries information about latest block. Returns the block object.
+      summary: Get Latest Block
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/block'
+              examples:
+                Success:
+                  value:
+                    block_header:
+                      raw_data:
+                        number: 1000000
+                        witness_address: 3211da43f143deb847555977cb32258c4c9251acfe
+                        version: 2
+                        parent_hash: 00000000000f423fdd3d41f74cb113aa7ddf4e2ddbdb9b0450b70da3646296f4
+                        timestamp: 1564524456000
+                        tx_trie_root: 0000000000000000000000000000000000000000000000000000000000000000
+                      witness_signature: f7223564b31a0205b83b6c4da3b5eb39ef676da5e05806f45b51065c98d7f67f78650e9664ea51fecd3c62cc1c4f7395ccc07f81eed886137871321ab925175f00
+                    block_id: 00000000000f4240914f382a811b0391e803ef96ccb9f9a37934442097a2b9ec
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            "https://mainnet.mcash.network/wallet/getnowblock"
+        - lang: mcashweb
+          source: |
+            mcashweb.mcash.getCurrentBlock().then(data => {
+              console.log(data);
+            })
+
+  /wallet/gettransactionbyid:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-gettransactionbyid
+      description: >-
+        Queries information about a transaction by 'Transaction Hash'. Returns the transaction object.
+      summary: Get Transaction By Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/idRequestBody'
+            examples:
+              first:
+                value:
+                  value: 001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transaction'
+              examples:
+                Success:
+                  value:
+                    ret:
+                    - contract_result: OK
+                    signature:
+                    - 018690c78dd2e5388fad6eb292024c10b775ebf329cf8805b0666f42523c751834bfb313bf19cdb06449f3cd56d1e5a2559961afd7de52c3b99a8b759fcebdea01
+                    tx_id: 001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c
+                    raw_data:
+                      contract:
+                      - parameter:
+                          value:
+                            amount: 20000000
+                            memo: 653263343839613730376665
+                            owner_address: 32985ce02cba3b266feb908cbfc86474033c6c5b22
+                            to_address: 322f15d0a02aeaeb770bdeea29fefc947661a48f94
+                            asset_id: 1000011
+                            type_url: "type.googleapis.com/protocol.TransferAssetContract"
+                        type: TransferAssetContract
+                      ref_block_bytes: 43f3
+                      ref_block_hash: efcf10a359c9ee00
+                      expiration: 1588568613000
+                      timestamp: 1588568553395
+                    raw_data_hex: 0a0243f32208efcf10a359c9ee004088c1c5f09d2e5a7f0802127b0a32747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e736665724173736574436f6e7472616374124508cb843d121532985ce02cba3b266feb908cbfc86474033c6c5b221a15322f15d0a02aeaeb770bdeea29fefc947661a48f942080dac4092a0c65326334383961373037666570b3efc1f09d2e
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{ "value" : "001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c"}' \
+            "https://mainnet.mcash.network/wallet/gettransactionbyid"
+        - lang: mcashweb
+          source: |
+            mcashweb.mcash.getTransaction("001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c").then(data => {
+              console.log(data);
+            })
+
+  /wallet/gettransactioninfobyid:
+    post:
+      tags:
+        - Query Network
+      operationId: wallet-gettransactioninfobyid
+      description: >-
+        Queries information about transaction fee, internal transactions, transaction logs by 'Transaction Hash'.
+      summary: Get Transaction Info By Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/idRequestBody'
+            examples:
+              first:
+                value:
+                  value: 001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transactionInfo'
+              examples:
+                Success:
+                  value:
+                    id: 001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c
+                    block_number: 8995829
+                    block_time_stamp: 1588568559000
+                    contract_result:
+                      - ""
+                    receipt:
+                      bandwidth_usage: 291
+                'Not found':
+                  value: {}
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{ "value" : "001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c"}' \
+            "https://mainnet.mcash.network/wallet/gettransactioninfobyid"
+        - lang: mcashweb
+          source: |
+            mcashweb.mcash.getTransactionInfo("001dc599fb47371f611c49e04ca42b9e8812394cca8e68851c8553715a5aba7c").then(data => {
+              console.log(data);
+            })
+
+
+
 components:
   parameters:
 
@@ -311,3 +925,298 @@ components:
                 type: string
                 format: uriref
                 description: A URL to the API console for each API
+
+    numRequestBody:
+      type: object
+      properties:
+        num:
+          type: integer
+          format: int64
+    idRequestBody:
+      type: object
+      properties:
+        value:
+          type: string
+          format: hex
+    addressRequestBody:
+      type: object
+      properties:
+        address:
+          type: string
+          format: hex
+
+    block:
+      type: object
+      properties:
+        block_header:
+          $ref: '#/components/schemas/blockHeader'
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/transaction'
+        block_id:
+          type: string
+          format: hex
+
+    blockHeader:
+      type: object
+      properties:
+        raw_data:
+          type: object
+          properties:
+            timestamp:
+              type: integer
+              format: int64
+            tx_trie_root:
+              type: string
+              format: hex
+            parent_hash:
+              type: string
+              format: hex
+            number:
+              type: integer
+              format: int64
+            witness_address:
+              type: string
+              format: hex
+            version:
+              type: integer
+              format: int32
+        witness_signature:
+          type: string
+          format: hex
+
+    transaction:
+      type: object
+      properties:
+        ret:
+          type: array
+          items:
+            type: object
+            properties:
+              contract_result:
+                type: string
+        signature:
+          type: array
+          items:
+            type: string
+            format: hex
+        tx_id:
+          type: string
+          format: hex
+        raw_data:
+          type: object
+          properties:
+            ref_block_bytes:
+              type: string
+              format: hex
+            ref_block_num:
+              type: integer
+              format: int64
+            ref_block_hash:
+              type: string
+              format: hex
+            expiration:
+              type: integer
+              format: int64
+            fee_limit:
+              type: integer
+              format: int64
+            timestamp:
+              type: integer
+              format: int64
+            contract:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  parameter:
+                    type: object
+        raw_data_hex:
+          type: string
+          format: hex
+
+    internalTransaction:
+      type: object
+      properties:
+        hash:
+          type: string
+          format: hex
+        call_value_info:
+          type: array
+          items:
+            type: object
+            properties:
+              call_value:
+                type: integer
+                format: int64
+              token_id:
+                type: integer
+                format: int64
+        note:
+          type: string
+          format: hex
+        rejected:
+          type: boolean
+
+    transactionInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: hex
+        block_number:
+          type: integer
+          format: int64
+        block_time_stamp:
+          type: integer
+          format: int64
+        contract_result:
+          type: array
+          items:
+            type: string
+        contract_address:
+          type: string
+          format: hex
+        receipt:
+          type: object
+          properties:
+            energy_usage:
+              type: integer
+              format: int64
+            energy_fee:
+              type: integer
+              format: int64
+            origin_energy_usage:
+              type: integer
+              format: int64
+            energy_usage_total:
+              type: integer
+              format: int64
+            bandwidth_usage:
+              type: integer
+              format: int64
+            bandwidth_fee:
+              type: integer
+              format: int64
+            result:
+              type: string
+        log:
+          type: array
+          items:
+            type: object
+            properties:
+              address:
+                type: string
+                format: hex
+              topics:
+                type: array
+                items:
+                  type: string
+                  format: hex
+              data:
+                type: string
+                format: hex
+        result:
+          type: string
+        res_message:
+          type: string
+          format: hex
+        asset_issue_id:
+          type: integer
+          format: int64
+        withdraw_amount:
+          type: integer
+          format: int64
+        unfreeze_amount:
+          type: integer
+          format: int64
+        unstake_amount:
+          type: integer
+          format: int64
+        vote_count:
+          type: integer
+          format: int64
+        internal_transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/internalTransaction'
+
+    transactionResponse:
+      type: object
+      properties:
+        tx_id:
+          type: string
+          format: hex
+        raw_data:
+          type: object
+          properties:
+            ref_block_bytes:
+              type: string
+              format: hex
+            ref_block_num:
+              type: integer
+              format: int64
+            ref_block_hash:
+              type: string
+              format: hex
+            expiration:
+              type: integer
+              format: int64
+            timestamp:
+              type: integer
+              format: int64
+            contract:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  parameter:
+                    type: object
+        raw_data_hex:
+          type: string
+          format: hex
+
+    accountResourceResponse:
+      type: object
+      properties:
+        free_bandwidth_limit:
+          type: integer
+          format: int64
+        bandwidth_limit:
+          type: integer
+          format: int64
+        asset_bandwidth_used:
+          type: array
+          items:
+            type: object
+            properties:
+              key: integer
+              format: int64
+        asset_bandwidth_limit:
+          type: array
+          items:
+            type: object
+            properties:
+              key: integer
+              format: int64
+        total_bandwidth_limit:
+          type: integer
+          format: int64
+        total_bandwidth_weight:
+          type: integer
+          format: int64
+        energy_limit:
+          type: integer
+          format: int64
+        total_energy_limit:
+          type: integer
+          format: int64
+        total_energy_weight:
+          type: integer
+          format: int64
+
